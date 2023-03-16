@@ -145,10 +145,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                         availableTime: availableTime
                     })
                     console.log(balance)
-                    availableTime = Math.round((balance+bonus)/price)
-                    console.log((balance+bonus)/price)
-                    console.log('balance+bonus', balance+bonus)
-                    console.log('price', price)
+                    availableTime = Math.round((+balance++bonus)/price)
                     console.log('availableTime', availableTime)
                     if (balance > 0 ) balance = balance - price / 60
                     if (balance <= 0 ) { console.log('minus bonus'); bonus = bonus - price / 60 }
