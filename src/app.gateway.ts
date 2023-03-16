@@ -37,6 +37,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
         let timers = {}
         let startBalance = {}
         let startBonus = {}
+        let callDuration = {}
 
         const trafficService = this.trafficService
         const callService = this.callService
@@ -56,7 +57,6 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
 
             let percent = null
             let price = null
-            let callDuration = 0
 
             socket.on('join', function (data) {
                 socket.join(data.userId)
@@ -101,6 +101,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 balance = client.balance
                 startBalance[data.clientId] = client.balance
                 startBonus[data.clientId] = client.bonus
+                callDuration[data.clientId] = 0
                 bonus = client.bonus
                 clientId = data.clientId
                 operatorId = data.operatorId
@@ -138,7 +139,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 clearInterval(timers[data.clientId])
                 timers[data.clientId] = setInterval(() => {
                     this.server.in(clientId).in(operatorId).emit('timerUpdate', {
-                        timer: callDuration,
+                        timer: callDuration[data.clientId],
                         currentBalance: balance,
                         currentBonus: bonus,
                         availableTime: availableTime
@@ -148,7 +149,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                     console.log('availableTime', availableTime)
                     if (balance > 0 ) balance = balance - price / 60
                     if (balance <= 0 ) { console.log('minus bonus'); bonus = bonus - price / 60 }
-                    callDuration++
+                    callDuration[data.clientId]++
                 }, 1000)
 
             });
@@ -160,13 +161,13 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 const callData = {
                     operatorId: operatorId,
                     clientId: clientId,
-                    duration: callDuration,
+                    duration: callDuration[data.clientId],
                     status: 'DROPPED',
                     cost: 0,
                     companyCost: 0,
                 }
                 const call = await callService.saveCall(callData)
-                callDuration = 0;
+                callDuration[data.clientId] = 0;
             })
 
             socket.on('callEnding', async function (data) {
@@ -194,12 +195,12 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 
 
                 let status = 'Success'
-                if ( callDuration < 30 ) status = 'Canceled'   
+                if ( callDuration[data.clientId] < 30 ) status = 'Canceled'   
 
                 const callData = {
                     operatorId: operatorId,
                     clientId: clientId,
-                    duration: callDuration,
+                    duration: callDuration[data.clientId],
                     status: status,
                     cost: cost,
                     companyCost: companyCost
@@ -208,7 +209,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 const call = await callService.saveCall(callData)
                 await userService.populateBalance(operatorId, cost)
                 await userService.populateBalance(clientId, amount * (-1))
-                callDuration = 0;
+                callDuration[data.clientId] = 0;
             })
 
             socket.on('disconnect', async function (data) {
