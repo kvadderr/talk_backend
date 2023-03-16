@@ -35,6 +35,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
         let onlineOperatorList = []
         let users = {}
         let timers = {}
+        let startBalance = {}
+        let startBonus = {}
 
         const trafficService = this.trafficService
         const callService = this.callService
@@ -97,6 +99,8 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 channelName = data.clientId + '_channel_' + data.operatorId;
                 token = await callService.generateToken(channelName)
                 balance = client.balance
+                startBalance[data.clientId] = client.balance
+                startBonus[data.clientId] = client.bonus
                 bonus = client.bonus
                 clientId = data.clientId
                 operatorId = data.operatorId
@@ -126,6 +130,9 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 token = data.token
                 balance = data.balance
                 bonus = data.bonus
+                
+                let availableTime = Math.round(((balance+bonus)/price))
+
                 socket.in(clientId).emit('callConfirmation', { token: token, channelName: channelName});
                 
                 clearInterval(timers[data.clientId])
@@ -133,17 +140,22 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                     this.server.in(clientId).in(operatorId).emit('timerUpdate', {
                         timer: callDuration,
                         currentBalance: balance,
-                        currentBonus: bonus 
+                        currentBonus: bonus,
+                        availableTime: availableTime
                     })
+                    console.log(balance)
+                    availableTime = Math.round(((balance+bonus)/price))
+                    console.log('availableTime', availableTime)
                     if (balance > 0 ) balance = balance - price / 60
-                    if (balance < 0 && bonus > 0) bonus = bonus - price / 60
+                    if (balance <= 0 ) { console.log('minus bonus'); bonus = bonus - price / 60 }
                     callDuration++
                 }, 1000)
 
             });
 
             socket.on('dropCall', async function (data) {
-                this.server.in(data.clientId).in(operatorId).emit('callEnding')
+                this.server.in(data.clientId).in(data.operatorId).emit('callEnding')
+                this.server.in(data.operatorId).emit('dropCall')
                 clearInterval(timers[clientId])
                 const callData = {
                     operatorId: operatorId,
@@ -160,6 +172,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
             socket.on('callEnding', async function (data) {
                 this.server.in(clientId).in(operatorId).emit('callEnding')
                 clearInterval(timers[clientId])
+                console.log(data)
 
                 let currentBonus = 0;
                 if (data.currentBalance <= 0 ) {
@@ -167,16 +180,17 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                     currentBonus = data.currentBonus
                     if (currentBonus < 0 ) currentBonus = 0
                     console.log('bonus', currentBonus)
-                    await userService.populateBonus(clientId, Math.floor(bonus))
+                    const minusBonus = Math.floor((startBonus[data.clientId] - currentBonus)*100)/100;
+                    await userService.populateBonus(clientId, minusBonus*(-1))
                     data.currentBalance = 0
                 }
 
-                const amount = Math.floor((balance - data.currentBalance)*100)/100
-                console.log('balance', balance)
+                const amount = Math.floor((startBalance[data.clientId] - data.currentBalance)*100)/100
+                console.log('balance', startBalance[data.clientId])
                 console.log('data.currentBalance', data.currentBalance)
                 console.log('amount', amount)
                 const companyCost = percent * amount / 100
-                const cost = amount - companyCost
+                const cost = Math.floor((amount - companyCost)*100)/100
                 
 
                 let status = 'Success'
