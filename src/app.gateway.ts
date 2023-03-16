@@ -132,7 +132,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 balance = data.balance
                 bonus = data.bonus
                 
-                let availableTime = Math.round(((balance+bonus)/price))
+                let availableTime = 100
 
                 socket.in(clientId).emit('callConfirmation', { token: token, channelName: channelName});
                 
