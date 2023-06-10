@@ -7,7 +7,7 @@ import { CallService } from './call/call.service'
 import { UserService } from './user/user.service'
 import { OperatorService } from './operator/operator.service'
 
-@WebSocketGateway()
+@WebSocketGateway({cors: true})
 export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(
