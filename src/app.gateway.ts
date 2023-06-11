@@ -144,9 +144,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                         currentBonus: bonus,
                         availableTime: availableTime
                     })
-                    console.log(balance)
                     availableTime = Math.round((+balance + +bonus)/+price)
-                    console.log('availableTime', availableTime)
                     if (balance > 0 ) balance = balance - price / 60
                     if (balance <= 0 ) { console.log('minus bonus'); bonus = bonus - price / 60 }
                     callDuration[data.clientId]++
@@ -206,10 +204,12 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                     companyCost: companyCost
                 }
                 console.log(callData)
+                callDuration[data.clientId] = 0;
                 const call = await callService.saveCall(callData)
+                if (cost === NaN) return;
                 await userService.populateBalance(operatorId, cost)
                 await userService.populateBalance(clientId, amount * (-1))
-                callDuration[data.clientId] = 0;
+                
             })
 
             socket.on('disconnect', async function (data) {
