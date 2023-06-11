@@ -206,7 +206,7 @@ export class AppGateway implements OnGatewayInit, OnGatewayConnection, OnGateway
                 console.log(callData)
                 callDuration[data.clientId] = 0;
                 const call = await callService.saveCall(callData)
-                if (cost === NaN) return;
+                if (isNaN(cost)) return;
                 await userService.populateBalance(operatorId, cost)
                 await userService.populateBalance(clientId, amount * (-1))
                 
