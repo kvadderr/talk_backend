@@ -23,4 +23,11 @@ export class FAQController {
     return await this.faqService.create(data);
   }
 
+  @ApiOperation({ summary: "Delete FAQ" })
+    @ApiResponse({ status: 200 })
+    @Delete()
+    deleteFavorite(@Body() data) {
+        return this.faqService.delete(data.id);
+    }
+
 }

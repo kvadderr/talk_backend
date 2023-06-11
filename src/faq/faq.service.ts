@@ -18,4 +18,11 @@ export class FAQService {
         return faqSaved;
     }
 
+    async delete(id: number){
+        const faq = await this.faqRepository.findOne({
+            where: { id }
+          })
+        return this.faqRepository.remove(faq)
+    }
+
 }
