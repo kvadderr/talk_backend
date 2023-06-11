@@ -18,6 +18,7 @@ import { Bonus } from './bonus/bonus.model'
 import { Notification } from './notification/notification.model'
 import { Payment } from './payment/payment.model'
 import { Withdrawals } from './withdrawals/withdrawals.model'
+import { Support } from './support/support.model'
 
 import { AppGateway } from './app.gateway'
 
@@ -38,6 +39,7 @@ import { NotificationModule } from './notification/notification.module'
 import { AnalyticsModule } from './analytics/analytics.module'
 import { PaymentModule } from './payment/payment.module'
 import { WithdrawalsModule } from './withdrawals/withdrawals.module'
+import { SupportModule } from './support/support.module'
 
 import { join } from 'path';
 
@@ -84,7 +86,8 @@ import { join } from 'path';
         Bonus,
         Notification,
         Payment,
-        Withdrawals
+        Withdrawals,
+        Support
       ],
       subscribers: ['dist/subscriber/*.js'],
       migrations: ['dist/migration/*.js'],
@@ -106,7 +109,8 @@ import { join } from 'path';
     NotificationModule,
     AnalyticsModule,
     PaymentModule,
-    WithdrawalsModule
+    WithdrawalsModule,
+    SupportModule
   ],
   providers: [AppModule, AppGateway],
 })
